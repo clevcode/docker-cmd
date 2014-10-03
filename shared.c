@@ -3,6 +3,8 @@
  */
 
 #define _GNU_SOURCE
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -57,6 +59,22 @@ int set_reasonably_secure_env(const char *username)
      * so until configuration options / configuration files have been
      * added to specify this, we keep it strict.
      */
+
+    return 0;
+}
+
+int close_files()
+{
+    struct rlimit rlim;
+    rlim_t fd;
+
+    if (getrlimit(RLIMIT_NOFILE, &rlim) == -1) {
+        perror("close_files: getrlimit");
+        _exit(1); /* rather not give the calling function a chance to mess this up */
+    }
+
+    for (fd = 3; fd < rlim.rlim_cur; fd++)
+        close(fd);
 
     return 0;
 }

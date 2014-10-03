@@ -274,6 +274,7 @@ FILE *execve_pipe(const char *fname, const char **argv, const char **envp)
         dup2(fds[1], 0);
         dup2(fds[1], 1);
         close(fds[1]);
+        close_files(); /* just in case, prevent fd leaks */
         execve(fname, (char * const*) argv, (char * const*) envp);
         _exit(1);
     }
@@ -395,6 +396,7 @@ int main(int argc, char **argv)
     }
 
     if (pid == 0) {
+        close_files(); /* just in case, prevent fd leaks */
         execvp(argp[0], argp);
         perror("execvp");
         return -1;

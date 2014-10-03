@@ -30,6 +30,7 @@ int main(void)
     snprintf(jailname, sizeof(jailname), "jail_%s", pw->pw_name);
     snprintf(username, sizeof(username), "%s", pw->pw_name);
 
+    close_files(); /* just in case, prevent fd leaks */
     execvp("sudo", argp);
     perror("execvp");
     return 1;

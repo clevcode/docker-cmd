@@ -6,5 +6,6 @@
 #define __DOCKER_CMD_SHARED_H
 
 int set_reasonably_secure_env(const char *username);
+int close_files();
 
 #endif /* ! __DOCKER_CMD_SHARED_H */
