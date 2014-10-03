@@ -16,7 +16,8 @@ a jail for the user with username "luser". Then set up sudo access by
 adding this to your sudoers-file:
 
 
-```# Allow user access to Docker jail
+```
+# Allow user access to Docker jail
 luser ALL=(root) NOPASSWD: /path/to/docker-cmd jail_luser luser
 ```
 
