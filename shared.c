@@ -16,18 +16,18 @@ extern char **environ;
 int set_reasonably_secure_env(const char *username)
 {
     static char home_buf[PATH_MAX+6], term_buf[64], path_buf[128], *term_str;
-    static char *envp[] = {
-        home_buf,
-        term_buf,
-        path_buf,
-        NULL
-    };
     struct passwd *pw;
 
+    errno = 0;
     if ((pw = getpwnam(username)) == NULL) {
-        perror("set_reasonably_secure_env: getpwnam");
-        return -1;
+        if (errno != 0)
+            perror("set_reasonably_secure_env: getpwnam");
+        else
+            fprintf(stderr, "set_reasonably_secure_env: getpwnam: User not found\n");
+        _exit(1); /* rather not give the calling function a chance to mess this up */
     }
+
+    clearenv();
 
     snprintf(home_buf, sizeof(home_buf), "HOME=%s", pw->pw_dir);
 
@@ -41,10 +41,14 @@ int set_reasonably_secure_env(const char *username)
 
     if (! strncmp(term_str, "() {", 4)) {
         fprintf(stderr, "set_reasonably_secure_env: Possible CVE-2014-6271 exploit attempt\n");
-        _exit(1);
+        _exit(1); /* rather not give the calling function a chance to mess this up */
     }
 
     snprintf(term_buf, sizeof(term_buf), "TERM=%s", term_str);
+
+    putenv(home_buf);
+    putenv(path_buf);
+    putenv(term_buf);
 
     /*
      * Might want to add a few more whitelisted environment variables,
@@ -52,8 +56,6 @@ int set_reasonably_secure_env(const char *username)
      * so until configuration options / configuration files have been
      * added to specify this, we keep it strict.
      */
-
-    environ = envp;
 
     return 0;
 }
