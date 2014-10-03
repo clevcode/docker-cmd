@@ -33,7 +33,8 @@ the jail is automatically entered when logging in, run:
 ```
 user=luser
 sudo docker-mkjail $user
-echo "$user ALL=(root) NOPASSWD: $(which docker-cmd) jail_$user $user" | sudo tee /etc/sudoers.d/jail_$user
+echo "$user ALL=(root) NOPASSWD: $(which docker-cmd) jail_$user $user" \
+  | sudo tee /etc/sudoers.d/jail_$user
 chsh -s $(which docker-jailsh) $user
 ```
 
