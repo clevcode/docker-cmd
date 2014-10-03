@@ -13,21 +13,20 @@ is provided, /bin/bash is used.
 
 The docker-mkjail and docker-jailsh tools are provided in order to
 simplify the process of setting up a jail for SSH users (for example).
-They will by default only have access to their own home directory. The
-docker-mkjail tool is only a shell script, and can easily be customized
-in case you want to add more shared folders between the host and the
-guest, or if you want to choose another Docker image for your jail.
 
 For more information, look at the "Setting up a Docker jail" section.
 
-Basic usage
-===========
+Installation
+============
 
 To build and install the docker-cmd tools, run:
 ```
 make clean all
 sudo make install
 ```
+
+Basic usage
+===========
 
 To use docker-cmd as a replacement for docker-bash or docker-enter,
 simply use it like this:
@@ -75,7 +74,9 @@ use another Docker base image or change the commands that are executed
 to set it up. By default, it will set up a jail container based on
 Ubuntu (Trusty), and disable all SUID/SGID programs within the jail in
 order to decrease the chances of performing a privilege escalation
-attack.
+attack. Another thing you might want to do is add more shared folders,
+by adding -v /path/on/host:/path/in/guest:rw to the docker run line.
+They will by default only have access to their own home directory.
 
 Note that a kernel vulnerability could obviously be abused in order to
 break out of the Docker container regardless. The only way to be fully
