@@ -119,11 +119,12 @@ UID and GID is determined by looking up the username on the host.
 Security
 ========
 
-While I have tried to minimize the risk of this being abused, I make no
-guarantees about the security of this solution. Since my primary area of
+While I have tried hard to minimize the risk of this being abused, I make
+no guarantees about the security of this solution. Since my primary area of
 expertise is within the offensive side of IT-security, rather than the
-defensive, I know how futile it might be to provide an impenetratable
-security solution. :) That being said, this should at the very least be
-better than only placing the user within a chroot-jail.
+defensive, I know how futile it might be to make any such guarantees.
+There will always be factors beyond my control, such as kernel vulnerabilities.
+That being said, I believe I have done my part in minimizing the possible
+attack vectors. :)
 
 Copyright (C) Joel Eriksson <je@clevcode.org> 2014
