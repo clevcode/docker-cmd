@@ -1,4 +1,5 @@
-# docker-cmd
+docker-cmd
+==========
 
 The docker-cmd project provides an alternative to docker-bash and
 dockersh (based on nsenter), that does the right thing and allocates
@@ -12,23 +13,44 @@ is provided, /bin/bash will be used.
 
 The included docker-mkjail script is an example on how to easily set
 up a Docker jail for a user. Just run "docker-mkjail luser", to set up
-a jail for the user with username "luser". Then set up sudo access by
-adding this to your sudoers-file:
+a jail for the user with username "luser". Then set up sudo access and
+change the login shell for the user in question:
 
+How to use
+==========
+
+To build and install the docker-cmd tools, run:
 
 ```
-# Allow user access to Docker jail
-luser ALL=(root) NOPASSWD: /path/to/docker-cmd jail_luser luser
+make clean all
+sudo make install
 ```
 
-Change "luser" to the username you want to place in a jail. Then set
-the users login shell to /path/to/docker-jailsh.
+To create a jail for the user with username "luser", configure sudo to
+allow entering the jail, and change the login shell for the user so that
+the jail is automatically entered when logging in, run:
 
-By default, the docker-mkjail script sets up an jail container based
-on Ubuntu, and disables all SUID/SGID programs within the jail in order
-to decrease the chances of performing a privilege escalation attack.
-Note that a kernel vulnerability could obviously be abused in order
-to break out of the Docker container regardless though.
+```
+user=luser
+sudo docker-mkjail $user
+echo "$user ALL=(root) NOPASSWD: $(which docker-cmd) jail_$user $user" | sudo tee /etc/sudoers.d/jail_$user
+chsh -s $(which docker-jailsh) $user
+```
+
+Notes
+=====
+
+You might want to customize the docker-mkjail script, if you want to
+use another Docker base image or change the commands that are executed
+to set it up. By default, it will set up a jail container based on
+Ubuntu (Trusty), and disable all SUID/SGID programs within the jail in
+order to decrease the chances of performing a privilege escalation
+attack.
+
+Note that a kernel vulnerability could obviously be abused in order to
+break out of the Docker container regardless. The only way to be fully
+secure is to not keep any sensitive data/services on the same host as
+you are letting people log in to, even when using this.
 
 The reaper-daemon (docker-reaper) is used as the init-process in jail
 containers, and simply handles the reaping of zombie processes. When
@@ -38,7 +60,8 @@ real init-process is not necessary. It would be possible to simply run
 /bin/bash here, of course, but besides being a waste of CPU cycles and
 RAM it would also result in zombie processes not being reaped.
 
-# Future enhancements
+Future enhancements
+===================
 
 Since this was developed primarily with the intention of quickly getting
 a working solution for myself and the specific use-case I had in mind,
