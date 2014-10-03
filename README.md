@@ -61,7 +61,7 @@ one, you should run (assuming the base image name is "jail"):
 sudo docker rm jail
 sudo docker rmi jail
 ```
-If you want to disable the jail for a user, and restore the login shell to /bin/bash, run:
+If you want to disable the jail for a user named "luser", and restore the login shell to /bin/bash, run:
 ```
 user=luser
 sudo docker stop jail_$user
