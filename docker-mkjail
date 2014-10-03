@@ -13,9 +13,9 @@
 # Copyright (C) Joel Eriksson <je@clevcode.org> 2014
 #
 
-if [ $# -lt 1 ]; then
+if [ $# -lt 2 ]; then
     echo "Usage: $0 USER [IMAGE] [HOSTNAME] [SHELL]" >&2
-    return 1
+    exit 1
 fi
 
 REAPER=$(which docker-reaper)
@@ -23,7 +23,7 @@ REAPER=$(which docker-reaper)
 if [ "$REAPER" = "" ]; then
     echo "The docker-reaper binary was not found." >&2
     echo "Have you run 'sudo make install' yet?" >&2
-    return 2
+    exit 2
 fi
 
 JIMAGE=ubuntu
@@ -47,7 +47,7 @@ psw=$(grep "^$usr:" /etc/passwd)
 
 if [ "$psw" = "" ]; then
     echo "No such user: $usr" >&2
-    return 3
+    exit 3
 fi
 
 uid=$(echo "$psw" | cut -d: -f3)
@@ -58,7 +58,7 @@ grp=$(awk -F: "\$3 == $gid { print \$1 }" < /etc/group)
 if [ "$dir" = "/" ]; then
     echo "The home directory for the user you want to create a jail for is /." >&2
     echo "That would be a pretty bad idea..." >&2
-    return 4
+    exit 4
 fi
 
 docker run --name="jail_${usr}" -h "$JHOST" -v "$dir:$dir:rw" -v "$REAPER:/sbin/reaper:ro" -d "$JIMAGE" /sbin/reaper
@@ -69,7 +69,7 @@ if [ $? -ne 0 ]; then
     echo "   docker stop jail_${usr}; docker rm jail_${usr}" >&2
     echo >&2
     echo "Then you can try to run this again." >&2
-    return 5
+    exit 5
 fi
 
 sudo docker-cmd "jail_${usr}" root groupadd -g "$gid" "$grp"
