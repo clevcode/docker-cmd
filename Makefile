@@ -1,5 +1,5 @@
-# You might need/want to configure these paths.
-DOCKER_PATH = /usr/bin/docker
+# You might need/want to change the installation path.
+DOCKER_PATH = $(shell which docker)
 TARGET_PATH = /usr/local/bin
 
 CC      = gcc
