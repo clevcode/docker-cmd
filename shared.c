@@ -11,8 +11,6 @@
 #include <errno.h>
 #include <pwd.h>
 
-extern char **environ;
-
 int set_reasonably_secure_env(const char *username)
 {
     static char home_buf[PATH_MAX+6], term_buf[64], path_buf[128], *term_str;
@@ -27,7 +25,10 @@ int set_reasonably_secure_env(const char *username)
         _exit(1); /* rather not give the calling function a chance to mess this up */
     }
 
-    clearenv();
+    if (clearenv() == -1) {
+        perror("set_reasonably_secure_env: clearenv");
+        _exit(1); /* rather not give the calling function a chance to mess this up */
+    }
 
     snprintf(home_buf, sizeof(home_buf), "HOME=%s", pw->pw_dir);
 
