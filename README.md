@@ -22,7 +22,7 @@ luser ALL=(root) NOPASSWD: /path/to/docker-cmd jail_luser luser
 ```
 
 Change "luser" to the username you want to place in a jail. Then set
-the users login shell to /usr/local/bin/docker-jailsh.
+the users login shell to /path/to/docker-jailsh.
 
 By default, the docker-mkjail script sets up an jail container based
 on Ubuntu, and disables all SUID/SGID programs within the jail in order
