@@ -38,8 +38,9 @@ docker-cmd CONTAINER
 docker-cmd CONTAINER nobody run echo Hello World
 ```
 The docker-reaper command can be used as the init-process in containers
-that do not require any daemons (and note that running an SSH daemon is
-quite unnecessary, when you can simply use docker-cmd instead). Example:
+that do not require any daemons (and note that running an SSH daemon from
+within the container is quite unnecessary, when you can simply use
+docker-cmd instead). Example:
 ```
 je@seth:~$ docker run -h test --name test -v $(which docker-reaper):/sbin/reaper:ro \
   -d ubuntu:trusty /sbin/reaper
