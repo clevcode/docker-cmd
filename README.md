@@ -13,8 +13,8 @@ is provided, /bin/bash is used.
 
 The docker-mkjail and docker-jailsh tools are provided in order to
 simplify the process of setting up a jail for SSH users (for example).
-
-For more information, look at the "Setting up a Docker jail" section.
+For more information about this, look at the "Setting up a Docker jail"
+section.
 
 Installation
 ============
