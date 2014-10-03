@@ -20,7 +20,6 @@ How to use
 ==========
 
 To build and install the docker-cmd tools, run:
-
 ```
 make clean all
 sudo make install
@@ -29,7 +28,6 @@ sudo make install
 To create a jail for the user with username "luser", configure sudo to
 allow entering the jail, and change the login shell for the user so that
 the jail is automatically entered when logging in, run:
-
 ```
 user=luser
 sudo docker-mkjail $user
@@ -37,6 +35,17 @@ echo "$user ALL=(root) NOPASSWD: $(which docker-cmd) jail_$user $user" \
   | sudo tee /etc/sudoers.d/jail_$user
 sudo chsh -s $(which docker-jailsh) $user
 ```
+
+If you want to remove the jail, and restore the login shell to /bin/bash, run:
+```
+user=luser
+sudo docker stop jail_$user
+sudo docker rm jail_$user
+sudo rm /etc/sudoers.d/jail_$user
+sudo chsh -s /bin/bash $user
+```
+
+These command sequences could obviously be placed in scripts for convenience.
 
 Notes
 =====

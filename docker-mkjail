@@ -61,7 +61,7 @@ if [ "$dir" = "/" ]; then
     exit 4
 fi
 
-docker run --name="jail_${usr}" -h "$JHOST" -v "$dir:$dir:rw" -v "$REAPER:/sbin/reaper:ro" -d "$JIMAGE" /sbin/reaper
+sudo docker run --name="jail_${usr}" -h "$JHOST" -v "$dir:$dir:rw" -v "$REAPER:/sbin/reaper:ro" -d "$JIMAGE" /sbin/reaper
 
 if [ $? -ne 0 ]; then
     echo "Docker failed to create jail. If it already exists, and you want to recreate it, run:" >&2
