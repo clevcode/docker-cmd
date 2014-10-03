@@ -44,7 +44,9 @@ quite unnecessary, when you can simply use docker-cmd instead). Example:
 je@seth:~$ docker run -h test --name test -v $(which docker-reaper):/sbin/reaper:ro \
   -d ubuntu:trusty /sbin/reaper
 20096f6b9871052f54687632d6cf12d9671bbf6a2d9792b2f7eac787b8d013f3
-je@seth:~/docker-cmd$ sudo docker-cmd test
+je@seth:~$ tty
+/dev/pts/22
+je@seth:~$ sudo docker-cmd test
 root@test:~# ps auxw
 USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
 root         1  0.0  0.0   4192   356 ?        Ss   13:05   0:00 /sbin/reaper
