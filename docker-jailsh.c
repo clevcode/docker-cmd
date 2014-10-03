@@ -12,7 +12,8 @@ int main(void)
         "sudo",
         "docker-cmd",
         jailname,
-        username
+        username,
+        NULL
     };
     struct passwd *pw;
     
