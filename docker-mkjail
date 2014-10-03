@@ -1,0 +1,85 @@
+#!/bin/sh
+#
+# Creates a jail-container for the user specified on the command line. Uses
+# the ubuntu image by default. Customize this to your needs. In particular,
+# the default base image you want to use for your jail, and the commands to
+# be executed in the jail after it has been created..
+#
+# In my case, I remove the SUID/SGID-bit from all SUID and SGID-binaries,
+# since I want to minimize the risk of privilege escalation and breaking out
+# of the Docker container. Of course, with a kernel vulnerability, it would
+# still be game over...
+#
+# Copyright (C) Joel Eriksson <je@clevcode.org> 2014
+#
+
+if [ $# -lt 1 ]; then
+    echo "Usage: $0 USER [IMAGE] [HOSTNAME] [SHELL]" >&2
+    return 1
+fi
+
+REAPER=$(which docker-reaper)
+
+if [ "$REAPER" = "" ]; then
+    echo "The docker-reaper binary was not found." >&2
+    echo "Have you run 'sudo make install' yet?" >&2
+    return 2
+fi
+
+JIMAGE=ubuntu
+JHOST=jail
+JSHELL=/bin/bash
+
+if [ $# -ge 2 ]; then
+    JIMAGE="$2"
+fi
+
+if [ $# -ge 3 ]; then
+    JHOSTNAME="$3"
+fi
+
+if [ $# -ge 4 ]; then
+    JSHELL="$4"
+fi
+
+usr="$1"
+psw=$(grep "^$usr:" /etc/passwd)
+
+if [ "$psw" = "" ]; then
+    echo "No such user: $usr" >&2
+    return 3
+fi
+
+uid=$(echo "$psw" | cut -d: -f3)
+gid=$(echo "$psw" | cut -d: -f4)
+dir=$(echo "$psw" | cut -d: -f6)
+grp=$(awk -F: "\$3 == $gid { print \$1 }" < /etc/group)
+
+if [ "$dir" = "/" ]; then
+    echo "The home directory for the user you want to create a jail for is /." >&2
+    echo "That would be a pretty bad idea..." >&2
+    return 4
+fi
+
+docker run --name="jail_${usr}" -h "$JHOST" -v "$dir:$dir:rw" -v "$REAPER:/sbin/reaper:ro" -d "$JIMAGE" /sbin/reaper
+
+if [ $? -ne 0 ]; then
+    echo "Docker failed to create jail. If it already exists, and you want to recreate it, run:" >&2
+    echo >&2
+    echo "   docker stop jail_${usr}; docker rm jail_${usr}" >&2
+    echo >&2
+    echo "Then you can try to run this again." >&2
+    return 5
+fi
+
+sudo docker-cmd "jail_${usr}" root groupadd -g "$gid" "$grp"
+sudo docker-cmd "jail_${usr}" root useradd -s "$JSHELL" -u "$uid" -g "$gid" -d "$dir" "$usr"
+sudo docker-cmd "jail_${usr}" root apt-get -y update
+sudo docker-cmd "jail_${usr}" root apt-get -y upgrade
+sudo docker-cmd "jail_${usr}" root apt-get -y dist-update
+sudo docker-cmd "jail_${usr}" root apt-get -y install python python-doc man-db manpages manpages-dev tmux
+sudo docker-cmd "jail_${usr}" root apt-get -y install python-examples binutils binfmt-support cpp
+sudo docker-cmd "jail_${usr}" root apt-get -y install tmux ctags vim vim-doc vim-scripts vim-nox
+sudo docker-cmd "jail_${usr}" root sh -c "find / -type f '(' -perm -4000 -o -perm -2000 ')' -exec chmod ug-s {} \\; 2>/dev/null"
+
+return 0
