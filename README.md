@@ -8,8 +8,8 @@ tmux and screen works within the session in question.
 
 Usage: docker-cmd CONTAINER [USER] [CMD]
 
-If no username is provided, it will be set to root, and if no command
-is provided, /bin/bash will be used.
+If no username is provided, it will be set to root. If no command
+is provided, /bin/bash is used.
 
 The included docker-mkjail script is an example on how to easily set
 up a Docker jail for a user. Just run "docker-mkjail luser", to set up
