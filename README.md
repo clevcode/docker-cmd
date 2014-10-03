@@ -6,7 +6,7 @@ dockersh (based on nsenter), that does the right thing and allocates
 a new pty from within the target container, so that programs such as
 tmux and screen works within the session in question.
 
-Usage: docker-cmd CONTAINER [USER] [CMD]
+Usage: docker-cmd CONTAINER USER CMD ARGS...
 
 If no username is provided, it will be set to root. If no command
 is provided, /bin/bash is used.
