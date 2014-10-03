@@ -37,7 +37,6 @@ docker-cmd CONTAINER
 # To run echo Hello World from within CONTAINER as user nobody
 docker-cmd CONTAINER nobody run echo Hello World
 ```
-
 Unlike most other solutions, a new pty will be allocated within the
 target container, so commands such as tmux and screen work fine.
 
@@ -54,7 +53,6 @@ echo "$user ALL=(root) NOPASSWD: $(which docker-cmd) jail_$user $user" \
   | sudo tee /etc/sudoers.d/jail_$user
 sudo chsh -s $(which docker-jailsh) $user
 ```
-
 If you want to remove the jail, and restore the login shell to /bin/bash, run:
 ```
 user=luser
