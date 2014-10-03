@@ -11,10 +11,14 @@ Usage: docker-cmd CONTAINER [USER] [CMD]
 If no username is provided, it will be set to root. If no command
 is provided, /bin/bash is used.
 
-The included docker-mkjail script is an example on how to easily set
-up a Docker jail for a user. Just run "docker-mkjail luser", to set up
-a jail for the user with username "luser". Then set up sudo access and
-change the login shell for the user in question:
+The docker-mkjail and docker-jailsh tools are provided in order to
+simplify the process of setting up a jail for SSH users (for example).
+They will by default only have access to their own home directory. The
+docker-mkjail tool is only a shell script, and can easily be customized
+in case you want to add more shared folders between the host and the
+guest, or if you want to choose another Docker image for your jail.
+
+For more information, look at the "Setting up a Docker jail" section.
 
 Basic usage
 ===========
