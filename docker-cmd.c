@@ -21,6 +21,8 @@
 #include <grp.h>
 #include <pty.h>
 
+#include "shared.h"
+
 int clone_namespace(pid_t pid, int nstype)
 {
     char *type = NULL;
@@ -313,16 +315,10 @@ pid_t get_docker_container_pid(const char *name)
 
 int main(int argc, char **argv)
 {
-    char home_buf[PATH_MAX+6], term_buf[64], path_buf[128];
     char *def_argp[] = { "/bin/bash", NULL };
     int set_supplemental_groups = 0;
     const char *username = "root";
     char **argp = def_argp;
-    const char *envp[] = {
-        home_buf,
-        term_buf,
-        path_buf
-    };
     struct passwd *pw;
     int status;
     int is_tty;
@@ -338,57 +334,54 @@ int main(int argc, char **argv)
     if (argc > 2)
         username = argv[2];
 
-    if ((pw = getpwnam(username)) == NULL) {
-        fprintf(stderr, "No such user: %s\n", username);
-        return 3;
-    }
-
     if (argc > 3)
         argp = &argv[3];
 
     is_tty = isatty(0);
 
-    snprintf(home_buf, sizeof(home_buf), "HOME=%s", pw->pw_dir);
+    if (set_reasonably_secure_env(username) == -1)
+        return 3;
 
-    if (pw->pw_uid == 0)
-        snprintf(path_buf, sizeof(path_buf), "PATH=/bin:/usr/bin:/sbin:/usr/sbin");
-    else
-        snprintf(path_buf, sizeof(path_buf), "PATH=/bin:/usr/bin");
+    if ((pw = getpwnam(username)) == NULL) {
+        fprintf(stderr, "No such user: %s\n", username);
+        return 4;
+    }
 
-    snprintf(term_buf, sizeof(term_buf), "TERM=%s", getenv("TERM"));
-
+    /*
+     * When docker adds support for CLONE_NEWUSER, that should be added as well.
+     */
     if (clone_namespace(pid, CLONE_NEWIPC) == -1
     ||  clone_namespace(pid, CLONE_NEWUTS) == -1
     ||  clone_namespace(pid, CLONE_NEWNET) == -1
     ||  clone_namespace(pid, CLONE_NEWPID) == -1
     ||  clone_namespace(pid, CLONE_NEWNS)  == -1)
-        return 4;
+        return 5;
 
     if (setregid(pw->pw_gid, pw->pw_gid) == -1) {
         perror("setregid");
-        return 5;
+        return 6;
     }
 
     if (set_supplemental_groups) {
         if (initgroups(argv[2], pw->pw_gid) == -1) {
             perror("initgroups");
-            return 6;
+            return 7;
         }
     } else {
         if (setgroups(1, &pw->pw_gid) == -1) {
             perror("setgroups");
-            return 6;
+            return 7;
         }
     }
 
     if (setreuid(pw->pw_uid, pw->pw_uid) == -1) {
         perror("setreuid");
-        return 7;
+        return 8;
     }
 
     if (chdir(pw->pw_dir) == -1) {
         perror("chdir");
-        return 8;
+        return 9;
     }
 
     if (is_tty)
@@ -398,12 +391,12 @@ int main(int argc, char **argv)
 
     if (pid == -1) {
         perror("fork");
-        return 9;
+        return 10;
     }
 
     if (pid == 0) {
-        execvpe(argp[0], argp, (char * const*) envp);
-        perror("execvpe");
+        execvp(argp[0], argp);
+        perror("execvp");
         return -1;
     }
 
@@ -414,7 +407,7 @@ int main(int argc, char **argv)
         sa.sa_handler = window_size_changed;
         if (sigaction(SIGWINCH, &sa, NULL) == -1) {
             perror("sigaction");
-            return 2;
+            return 11;
         }
         clone_window_size(STDIN_FILENO, pty_fd);
         tty_raw();
@@ -424,7 +417,7 @@ int main(int argc, char **argv)
 
     if (waitpid(pid, &status, 0) == -1) {
         perror("waitpid");
-        return 10;
+        return 12;
     }
 
     return WEXITSTATUS(status);
