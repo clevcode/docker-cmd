@@ -16,14 +16,30 @@ up a Docker jail for a user. Just run "docker-mkjail luser", to set up
 a jail for the user with username "luser". Then set up sudo access and
 change the login shell for the user in question:
 
-How to use
-==========
+Basic usage
+===========
 
 To build and install the docker-cmd tools, run:
 ```
 make clean all
 sudo make install
 ```
+
+To use docker-cmd as a replacement for docker-bash or docker-enter,
+simply use it like this:
+```
+# To enter the container with name CONTAINER as root and run /bin/bash
+docker-cmd CONTAINER
+
+# To run echo Hello World from within CONTAINER as user nobody
+docker-cmd CONTAINER nobody run echo Hello World
+```
+
+Unlike most other solutions, a new pty will be allocated within the
+target container, so commands such as tmux and screen work fine.
+
+Setting up a Docker jail
+========================
 
 To create a jail for the user with username "luser", configure sudo to
 allow entering the jail, and change the login shell for the user so that
