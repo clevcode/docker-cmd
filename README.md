@@ -53,7 +53,11 @@ echo "$user ALL=(root) NOPASSWD: $(which docker-cmd) jail_$user $user" \
   | sudo tee /etc/sudoers.d/jail_$user
 sudo chsh -s $(which docker-jailsh) $user
 ```
-If you want to remove the jail, and restore the login shell to /bin/bash, run:
+The first time you create a jail, it will create a new base image. This will
+take some time. The next time you create a jail for a user, this image will
+be reused.
+
+If you want to remove a jail, and restore the login shell to /bin/bash, run:
 ```
 user=luser
 sudo docker stop jail_$user
