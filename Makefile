@@ -17,7 +17,7 @@ TARGETS = docker-cmd docker-jailsh docker-reaper
 all: $(TARGETS)
 
 install: $(TARGETS)
-	install -m 755 -o 0 -g 0 $(TARGETS) docker-mkjail $(TARGET_PATH)
+	install -m 755 -o 0 -g 0 $(TARGETS) docker-mkjail docker-rmjail $(TARGET_PATH)
 
 clean:
 	-$(RM) $(TARGETS) *.o

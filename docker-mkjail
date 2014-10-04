@@ -14,8 +14,13 @@
 #
 
 if [ $# -lt 1 ]; then
-    echo "Usage: $0 USER [HOSTNAME] [BASENAME] [IMAGE] [SHELL]" >&2
+    echo "Usage: $0 USER [HOSTNAME] [JAILNAME] [IMAGE] [SHELL]" >&2
     exit 1
+fi
+
+if [ $(id -u) -ne 0 ]; then
+    echo "This command must be run as root." >&2
+    exit 2
 fi
 
 REAPER=$(which docker-reaper)
@@ -23,17 +28,17 @@ REAPER=$(which docker-reaper)
 if [ "$REAPER" = "" ]; then
     echo "The docker-reaper binary was not found." >&2
     echo "Have you run 'sudo make install' yet?" >&2
-    exit 2
+    exit 3
 fi
 
-# The name of the jail container to use as a base
-JAIL_BASENAME=jail
+# The name of the base jail container
+JAIL_JAILNAME=jail
 
 # The image to use when building the initial jail container
 JAIL_IMAGE=ubuntu:trusty
 
-# The hostname to use for the jail
-JAIL_HOSTNAME=jail
+# The hostname to use for the jail, same as host by default
+JAIL_HOSTNAME=$(hostname)
 
 # The shell to assign to the jailed user, within the jail
 JAIL_SHELL=/bin/bash
@@ -47,7 +52,7 @@ if [ $# -ge 3 ]; then
 fi
 
 if [ $# -ge 4 ]; then
-    JAIL_BASENAME="$4"
+    JAIL_JAILNAME="$4"
 fi
 
 if [ $# -ge 5 ]; then
@@ -59,7 +64,7 @@ psw=$(grep "^$usr:" /etc/passwd)
 
 if [ "$psw" = "" ]; then
     echo "No such user: $usr" >&2
-    exit 3
+    exit 4
 fi
 
 uid=$(echo "$psw" | cut -d: -f3)
@@ -70,46 +75,52 @@ grp=$(awk -F: "\$3 == $gid { print \$1 }" < /etc/group)
 if [ "$dir" = "/" ]; then
     echo "The home directory for the user you want to create a jail for is /." >&2
     echo "That would be a pretty bad idea..." >&2
-    exit 4
-fi
-
-docker inspect "$JAIL_BASENAME" >/dev/null 2>&1
-
-if [ $? -ne 0 ]; then
-    echo "Could not find jail container, creating..." >&2
-    sudo docker run --name="$JAIL_BASENAME" -h "$JAIL_HOSTNAME" -v "$REAPER:/sbin/reaper:ro" -d "$JAIL_IMAGE" /sbin/reaper
-    sudo docker-cmd "$JAIL_BASENAME" root apt-get -y update
-    sudo docker-cmd "$JAIL_BASENAME" root apt-get -y upgrade
-    sudo docker-cmd "$JAIL_BASENAME" root apt-get -y dist-update
-    # For scp and sftp to work, these must be installed within the jail
-    sudo docker-cmd "$JAIL_BASENAME" root apt-get -y install openssh-client openssh-server
-    # Install a bunch of other useful packages, customize these any way you like
-    sudo docker-cmd "$JAIL_BASENAME" root apt-get -y install python python-doc man-db manpages manpages-dev tmux
-    sudo docker-cmd "$JAIL_BASENAME" root apt-get -y install python-examples binutils binfmt-support cpp
-    sudo docker-cmd "$JAIL_BASENAME" root apt-get -y install tmux ctags vim vim-doc vim-scripts vim-nox
-    # Disable all SUID/SGID binaries. Do this after all packages have been installed.
-    sudo docker-cmd "$JAIL_BASENAME" root sh -c "find / -type f '(' -perm -4000 -o -perm -2000 ')' -exec chmod ug-s {} \\; 2>/dev/null"
-    sudo docker stop "$JAIL_BASENAME"
-    sudo docker commit "$JAIL_BASENAME" "$JAIL_BASENAME"
-fi
-
-docker inspect "${JAIL_BASENAME}_$usr" >/dev/null 2>&1
-
-if [ $? -eq 0 ]; then
-    echo "Jail for user already exists, removing..." >&2
-    sudo docker stop "${JAIL_BASENAME}_$usr" >/dev/null 2>&1
-    sudo docker rm "${JAIL_BASENAME}_$usr" >/dev/null 2>&1
-fi
-
-echo "Creating jail for user $usr..." >&2
-docker run --name="${JAIL_BASENAME}_${usr}" -h "$JAIL_HOSTNAME" -v "$REAPER:/sbin/reaper:ro" -v "$dir:$dir:rw" -d "$JAIL_BASENAME"
-
-if [ $? -ne 0 ]; then
-    echo "Docker failed to create jail. :(" >&2
     exit 5
 fi
 
-sudo docker-cmd "${JAIL_BASENAME}_${usr}" root groupadd -g "$gid" "$grp"
-sudo docker-cmd "${JAIL_BASENAME}_${usr}" root useradd -s "$JAIL_SHELL" -u "$uid" -g "$gid" -d "$dir" "$usr"
+docker inspect "$JAIL_JAILNAME" >/dev/null 2>&1
+
+if [ $? -ne 0 ]; then
+    echo "Could not find jail container, creating..." >&2
+    docker run --name="$JAIL_JAILNAME" -h "$JAIL_HOSTNAME" -v "$REAPER:/sbin/reaper:ro" -d "$JAIL_IMAGE" /sbin/reaper
+    docker-cmd "$JAIL_JAILNAME" root apt-get -y update
+    docker-cmd "$JAIL_JAILNAME" root apt-get -y upgrade
+    docker-cmd "$JAIL_JAILNAME" root apt-get -y dist-update
+    # For scp and sftp to work, these must be installed within the jail
+    docker-cmd "$JAIL_JAILNAME" root apt-get -y install openssh-client openssh-server
+    # Install a bunch of other useful packages, customize these any way you like
+    docker-cmd "$JAIL_JAILNAME" root apt-get -y install python python-doc man-db manpages manpages-dev tmux
+    docker-cmd "$JAIL_JAILNAME" root apt-get -y install python-examples binutils binfmt-support cpp
+    docker-cmd "$JAIL_JAILNAME" root apt-get -y install tmux ctags vim vim-doc vim-scripts vim-nox
+    # Disable all SUID/SGID binaries. Do this after all packages have been installed.
+    docker-cmd "$JAIL_JAILNAME" root sh -c "find / -type f '(' -perm -4000 -o -perm -2000 ')' -exec chmod ug-s {} \\; 2>/dev/null"
+    docker stop "$JAIL_JAILNAME"
+    docker commit "$JAIL_JAILNAME" "$JAIL_JAILNAME"
+fi
+
+docker inspect "${JAIL_JAILNAME}_$usr" >/dev/null 2>&1
+
+if [ $? -eq 0 ]; then
+    echo "Jail for user already exists, removing..." >&2
+    docker stop "${JAIL_JAILNAME}_$usr" >/dev/null 2>&1
+    docker rm "${JAIL_JAILNAME}_$usr" >/dev/null 2>&1
+fi
+
+echo "Creating jail for user $usr..." >&2
+docker run --name="${JAIL_JAILNAME}_${usr}" -h "$JAIL_HOSTNAME" -v "$REAPER:/sbin/reaper:ro" -v "$dir:$dir:rw" -d "$JAIL_JAILNAME"
+
+if [ $? -ne 0 ]; then
+    echo "Docker failed to create jail. :(" >&2
+    exit 6
+fi
+
+docker-cmd "${JAIL_JAILNAME}_${usr}" root groupadd -g "$gid" "$grp"
+docker-cmd "${JAIL_JAILNAME}_${usr}" root useradd -s "$JAIL_SHELL" -u "$uid" -g "$gid" -d "$dir" "$usr"
+
+cat > /etc/sudoers.d/jail_$usr << EOF
+$usr ALL=(root) NOPASSWD: $(which docker-cmd) ${JAIL_JAILNAME}_$usr $usr
+$usr ALL=(root) NOPASSWD: $(which docker-cmd) ${JAIL_JAILNAME}_$usr $usr *
+EOF
+usermod -s $(which docker-jailsh) $user
 
 exit 0

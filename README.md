@@ -11,7 +11,7 @@ Usage: docker-cmd CONTAINER USER CMD ARGS...
 If no username is provided, it will be set to root. If no command
 is provided, /bin/bash is used.
 
-The docker-mkjail and docker-jailsh tools are provided in order to
+The docker-mkjail and docker-rmjail tools are provided in order to
 simplify the process of setting up a jail for SSH users (for example).
 For more information about this, look at the "Setting up a Docker jail"
 section.
@@ -71,32 +71,20 @@ To create a jail for the user with username "luser", configure sudo to
 allow entering the jail, and change the login shell for the user so that
 the jail is automatically entered when logging in, run:
 ```
-user=luser
-sudo docker-mkjail $user
-cat << EOF | sudo tee /etc/sudoers.d/jail_$user
-$user ALL=(root) NOPASSWD: $(which docker-cmd) jail_$user $user
-$user ALL=(root) NOPASSWD: $(which docker-cmd) jail_$user $user *
-EOF
-sudo chsh -s $(which docker-jailsh) $user
+docker-mkjail luser
+```
+If you want to disable the jail and restore the default login shell for "luser", run:
+```
+docker-rmjail luser
 ```
 The first time you create a jail, it will create a new base image. This will
 take some time. The next time you create a jail for a user, this image will
 be reused. If you want to remove a jail base image, in order to create a new
-one, you should run (assuming the base image name is "jail"):
+one, you should run (assuming the default base image name "jail" is used):
 ```
 sudo docker rm jail
 sudo docker rmi jail
 ```
-If you want to disable the jail for a user named "luser", and restore the login shell to /bin/bash, run:
-```
-user=luser
-sudo docker stop jail_$user
-sudo docker rm jail_$user
-sudo rm /etc/sudoers.d/jail_$user
-sudo chsh -s /bin/bash $user
-```
-
-These command sequences could obviously be placed in scripts for convenience.
 
 Notes
 =====
