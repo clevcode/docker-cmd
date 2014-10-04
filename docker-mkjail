@@ -60,6 +60,7 @@ if [ $# -ge 5 ]; then
 fi
 
 usr="$1"
+
 psw=$(grep "^$usr:" /etc/passwd)
 
 if [ "$psw" = "" ]; then
@@ -72,10 +73,15 @@ gid=$(echo "$psw" | cut -d: -f4)
 dir=$(echo "$psw" | cut -d: -f6)
 grp=$(awk -F: "\$3 == $gid { print \$1 }" < /etc/group)
 
+if [ "$uid" = "0" ]; then
+    echo "Setting up a jail for a user with root-privileges is meaningless. Don't." >&2
+    exit 5
+fi
+
 if [ "$dir" = "/" ]; then
     echo "The home directory for the user you want to create a jail for is /." >&2
     echo "That would be a pretty bad idea..." >&2
-    exit 5
+    exit 6
 fi
 
 docker inspect "$JAIL_JAILNAME" >/dev/null 2>&1
@@ -111,7 +117,7 @@ docker run --name="${JAIL_JAILNAME}_${usr}" -h "$JAIL_HOSTNAME" -v "$REAPER:/sbi
 
 if [ $? -ne 0 ]; then
     echo "Docker failed to create jail. :(" >&2
-    exit 6
+    exit 7
 fi
 
 docker-cmd "${JAIL_JAILNAME}_${usr}" root groupadd -g "$gid" "$grp"
