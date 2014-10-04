@@ -46,12 +46,12 @@ int clone_namespace(pid_t pid, int nstype)
     snprintf(fname, sizeof(fname), "/proc/%u/ns/%s", pid, type);
 
     if ((fd = open(fname, O_RDONLY)) == -1) {
-        perror("clone_namespace: open");
+        fprintf(stderr, "clone_namespace(%d, %s): open: %s\n", pid, type, strerror(errno));
         return -1;
     }
 
     if (setns(fd, nstype) == -1) {
-        perror("clone_namespace: setns");
+        fprintf(stderr, "clone_namespace(%d, %s): setns: %s\n", pid, type, strerror(errno));
         return -1;
     }
 

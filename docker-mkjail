@@ -113,7 +113,7 @@ if [ $? -eq 0 ]; then
 fi
 
 echo "Creating jail for user $usr..." >&2
-docker run --name="${JAILNAME}_${usr}" -h "$JAIL_HOSTNAME" -v "$REAPER:/sbin/reaper:ro" -v "$dir:$dir:rw" -d "$JAILNAME" >/dev/null
+docker run --name="${JAILNAME}_${usr}" -h "$JAIL_HOSTNAME" -v "$REAPER:/sbin/reaper:ro" -v "$dir:$dir:rw" -d "$JAILNAME" /sbin/reaper
 
 if [ $? -ne 0 ]; then
     echo "Docker failed to create jail. :(" >&2
