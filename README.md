@@ -19,8 +19,10 @@ section.
 Installation
 ============
 
-To build and install the docker-cmd tools, run:
+To download, build and install the docker-cmd tools, run:
 ```
+git clone https://github.com/clevcode/docker-cmd.git
+cd docker-cmd
 make clean all
 sudo make install
 ```
