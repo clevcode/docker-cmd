@@ -1,9 +1,10 @@
-# You might need/want to change the installation path.
+# You might need/want to change the installation path, and the default shell.
 DOCKER_PATH = $(shell which docker)
 TARGET_PATH = /usr/local/bin
+SHELL       = /bin/bash
 
 CC      = gcc
-CFLAGS  = -O -Wall -ansi -pedantic -std=c99 -DDOCKER_PATH="\"$(DOCKER_PATH)\"" -I.
+CFLAGS  = -O -Wall -ansi -pedantic -std=c99 -DDOCKER_PATH=\"$(DOCKER_PATH)\" -I.
 LDFLAGS = -lutil
 TARGETS = docker-cmd docker-jailsh docker-reaper
 
@@ -27,4 +28,4 @@ docker-reaper: docker-reaper.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 docker-jailsh: docker-jailsh.c shared.o
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ -DSHELL=\"$(SHELL)\"
