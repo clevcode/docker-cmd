@@ -34,10 +34,10 @@ To use docker-cmd as a replacement for docker-bash or docker-enter,
 simply use it like this:
 ```
 # To enter the container with name CONTAINER as root and run /bin/bash
-docker-cmd CONTAINER
+sudo docker-cmd CONTAINER
 
 # To run echo Hello World from within CONTAINER as user nobody
-docker-cmd CONTAINER nobody run echo Hello World
+sudo docker-cmd CONTAINER nobody run echo Hello World
 ```
 The docker-reaper command can be used as the init-process in containers
 that do not require any daemons (and note that running an SSH daemon from
@@ -71,16 +71,17 @@ To create a jail for the user with username "luser", configure sudo to
 allow entering the jail, and change the login shell for the user so that
 the jail is automatically entered when logging in, run:
 ```
-docker-mkjail luser
+sudo docker-mkjail luser
 ```
 If you want to disable the jail and restore the default login shell for "luser", run:
 ```
-docker-rmjail luser
+sudo docker-rmjail luser
 ```
 The first time you create a jail, it will create a new base image. This will
 take some time. The next time you create a jail for a user, this image will
 be reused. If you want to remove a jail base image, in order to create a new
-one, you should run (assuming the default base image name "jail" is used):
+one, you should run (assuming the default base image name "jail" is used) the
+following to remove the existing one first:
 ```
 sudo docker rm jail
 sudo docker rmi jail
