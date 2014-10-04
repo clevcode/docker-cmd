@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) Joel Eriksson <je@clevcode.org> 2014
+ */
+
 #define _POSIX_SOURCE
 #include <sys/wait.h>
 #include <signal.h>
