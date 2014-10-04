@@ -71,8 +71,10 @@ the jail is automatically entered when logging in, run:
 ```
 user=luser
 sudo docker-mkjail $user
-echo "$user ALL=(root) NOPASSWD: $(which docker-cmd) jail_$user $user *" \
-  | sudo tee /etc/sudoers.d/jail_$user
+cat << EOF | sudo tee /etc/sudoers.d/jail_$user
+$user ALL=(root) NOPASSWD: $(which docker-cmd) jail_$user $user
+$user ALL=(root) NOPASSWD: $(which docker-cmd) jail_$user $user *
+EOF
 sudo chsh -s $(which docker-jailsh) $user
 ```
 The first time you create a jail, it will create a new base image. This will

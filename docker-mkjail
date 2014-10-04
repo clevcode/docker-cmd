@@ -81,9 +81,13 @@ if [ $? -ne 0 ]; then
     sudo docker-cmd "$JAIL_BASENAME" root apt-get -y update
     sudo docker-cmd "$JAIL_BASENAME" root apt-get -y upgrade
     sudo docker-cmd "$JAIL_BASENAME" root apt-get -y dist-update
+    # For scp and sftp to work, these must be installed within the jail
+    sudo docker-cmd "$JAIL_BASENAME" root apt-get -y install openssh-client openssh-server
+    # Install a bunch of other useful packages, customize these any way you like
     sudo docker-cmd "$JAIL_BASENAME" root apt-get -y install python python-doc man-db manpages manpages-dev tmux
     sudo docker-cmd "$JAIL_BASENAME" root apt-get -y install python-examples binutils binfmt-support cpp
     sudo docker-cmd "$JAIL_BASENAME" root apt-get -y install tmux ctags vim vim-doc vim-scripts vim-nox
+    # Disable all SUID/SGID binaries. Do this after all packages have been installed.
     sudo docker-cmd "$JAIL_BASENAME" root sh -c "find / -type f '(' -perm -4000 -o -perm -2000 ')' -exec chmod ug-s {} \\; 2>/dev/null"
     sudo docker stop "$JAIL_BASENAME"
     sudo docker commit "$JAIL_BASENAME" "$JAIL_BASENAME"
