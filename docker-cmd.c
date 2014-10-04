@@ -292,8 +292,12 @@ pid_t get_docker_container_pid(const char *name)
     if ((fp = execve_pipe(fname, argp, envp)) == NULL)
         return (pid_t) -1;
 
+    errno = 0;
     if (fscanf(fp, "%d", &pid) != 1) {
-        perror("get_docker_container_pid: fscanf");
+        if (errno != 0)
+            perror("get_docker_container_pid: fscanf");
+        else
+            fprintf(stderr, "get_docker_container_pid: Could not find a PID for container '%s'\n", name);
         return (pid_t) -1;
     }
 
@@ -318,7 +322,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    pid = get_docker_container_pid(argv[1]);
+    if ((pid = get_docker_container_pid(argv[1])) == (pid_t) -1)
+        return 2;
 
     if (argc > 2)
         username = argv[2];
