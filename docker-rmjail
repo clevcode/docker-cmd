@@ -4,7 +4,7 @@
 #
 
 if [ $# -lt 1 ]; then
-    echo "Usage: $0 USER [BASENAME] [SHELL]" >&2
+    echo "Usage: $0 USER [JAILNAME]" >&2
     exit 1
 fi
 
@@ -13,13 +13,18 @@ if [ $(id -u) -ne 0 ]; then
     exit 2
 fi
 
-user="$1"
+JAILNAME=jail
+USERNAME="$1"
 
-echo "Removing jail for $user..." >&2
+if [ $# -ge 2 ]; then
+	JAILNAME="$2"
+fi
 
-docker stop jail_$user >/dev/null 2>&1
-docker rm jail_$user >/dev/null 2>&1
-rm -f /etc/sudoers.d/jail_$user 2>/dev/null
-usermod -s "" $user
+echo "Removing jail for ${USERNAME}..." >&2
+
+docker stop -t 1 ${JAILNAME}_${USERNAME} >/dev/null
+docker rm ${JAILNAME}_${USERNAME} >/dev/null
+rm -f /etc/sudoers.d/${JAILNAME}_${USERNAME}
+usermod -s "" ${USERNAME}
 
 exit 0

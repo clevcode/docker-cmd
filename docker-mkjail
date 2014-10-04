@@ -23,6 +23,9 @@ if [ $(id -u) -ne 0 ]; then
     exit 2
 fi
 
+# The name of the base jail container
+JAILNAME=jail
+
 REAPER=$(which docker-reaper)
 
 if [ "$REAPER" = "" ]; then
@@ -30,9 +33,6 @@ if [ "$REAPER" = "" ]; then
     echo "Have you run 'sudo make install' yet?" >&2
     exit 3
 fi
-
-# The name of the base jail container
-JAIL_JAILNAME=jail
 
 # The image to use when building the initial jail container
 JAIL_IMAGE=ubuntu:trusty
@@ -52,7 +52,7 @@ if [ $# -ge 3 ]; then
 fi
 
 if [ $# -ge 4 ]; then
-    JAIL_JAILNAME="$4"
+    JAILNAME="$4"
 fi
 
 if [ $# -ge 5 ]; then
@@ -84,49 +84,49 @@ if [ "$dir" = "/" ]; then
     exit 6
 fi
 
-docker inspect "$JAIL_JAILNAME" >/dev/null 2>&1
+docker inspect "$JAILNAME" >/dev/null 2>&1
 
 if [ $? -ne 0 ]; then
     echo "Could not find jail container, creating..." >&2
-    docker run --name="$JAIL_JAILNAME" -h "$JAIL_HOSTNAME" -v "$REAPER:/sbin/reaper:ro" -d "$JAIL_IMAGE" /sbin/reaper
-    docker-cmd "$JAIL_JAILNAME" root apt-get -y update
-    docker-cmd "$JAIL_JAILNAME" root apt-get -y upgrade
-    docker-cmd "$JAIL_JAILNAME" root apt-get -y dist-update
+    docker run --name="$JAILNAME" -h "$JAIL_HOSTNAME" -v "$REAPER:/sbin/reaper:ro" -d "$JAIL_IMAGE" /sbin/reaper
+    docker-cmd "$JAILNAME" root apt-get -y update
+    docker-cmd "$JAILNAME" root apt-get -y upgrade
+    docker-cmd "$JAILNAME" root apt-get -y dist-update
     # For scp and sftp to work, these must be installed within the jail
-    docker-cmd "$JAIL_JAILNAME" root apt-get -y install openssh-client openssh-server
+    docker-cmd "$JAILNAME" root apt-get -y install openssh-client openssh-server
     # Install a bunch of other useful packages, customize these any way you like
-    docker-cmd "$JAIL_JAILNAME" root apt-get -y install python python-doc man-db manpages manpages-dev tmux
-    docker-cmd "$JAIL_JAILNAME" root apt-get -y install python-examples binutils binfmt-support cpp
-    docker-cmd "$JAIL_JAILNAME" root apt-get -y install tmux ctags vim vim-doc vim-scripts vim-nox
+    docker-cmd "$JAILNAME" root apt-get -y install python python-doc man-db manpages manpages-dev tmux
+    docker-cmd "$JAILNAME" root apt-get -y install python-examples binutils binfmt-support cpp
+    docker-cmd "$JAILNAME" root apt-get -y install tmux ctags vim vim-doc vim-scripts vim-nox
     # Disable all SUID/SGID binaries. Do this after all packages have been installed.
-    docker-cmd "$JAIL_JAILNAME" root sh -c "find / -type f '(' -perm -4000 -o -perm -2000 ')' -exec chmod ug-s {} \\; 2>/dev/null"
-    docker stop "$JAIL_JAILNAME"
-    docker commit "$JAIL_JAILNAME" "$JAIL_JAILNAME"
+    docker-cmd "$JAILNAME" root sh -c "find / -type f '(' -perm -4000 -o -perm -2000 ')' -exec chmod ug-s {} \\; 2>/dev/null"
+    docker stop -t 1 "$JAILNAME" >/dev/null
+    docker commit "$JAILNAME" "$JAILNAME"
 fi
 
-docker inspect "${JAIL_JAILNAME}_$usr" >/dev/null 2>&1
+docker inspect "${JAILNAME}_$usr" >/dev/null 2>&1
 
 if [ $? -eq 0 ]; then
     echo "Jail for user already exists, removing..." >&2
-    docker stop "${JAIL_JAILNAME}_$usr" >/dev/null 2>&1
-    docker rm "${JAIL_JAILNAME}_$usr" >/dev/null 2>&1
+    docker stop -t 1 "${JAILNAME}_$usr" >/dev/null
+    docker rm "${JAILNAME}_$usr" >/dev/null
 fi
 
 echo "Creating jail for user $usr..." >&2
-docker run --name="${JAIL_JAILNAME}_${usr}" -h "$JAIL_HOSTNAME" -v "$REAPER:/sbin/reaper:ro" -v "$dir:$dir:rw" -d "$JAIL_JAILNAME"
+docker run --name="${JAILNAME}_${usr}" -h "$JAIL_HOSTNAME" -v "$REAPER:/sbin/reaper:ro" -v "$dir:$dir:rw" -d "$JAILNAME"
 
 if [ $? -ne 0 ]; then
     echo "Docker failed to create jail. :(" >&2
     exit 7
 fi
 
-docker-cmd "${JAIL_JAILNAME}_${usr}" root groupadd -g "$gid" "$grp"
-docker-cmd "${JAIL_JAILNAME}_${usr}" root useradd -s "$JAIL_SHELL" -u "$uid" -g "$gid" -d "$dir" "$usr"
+docker-cmd "${JAILNAME}_${usr}" root groupadd -g "$gid" "$grp"
+docker-cmd "${JAILNAME}_${usr}" root useradd -s "$JAIL_SHELL" -u "$uid" -g "$gid" -d "$dir" "$usr"
 
 cat > /etc/sudoers.d/jail_$usr << EOF
-$usr ALL=(root) NOPASSWD: $(which docker-cmd) ${JAIL_JAILNAME}_$usr $usr
-$usr ALL=(root) NOPASSWD: $(which docker-cmd) ${JAIL_JAILNAME}_$usr $usr *
+$usr ALL=(root) NOPASSWD: $(which docker-cmd) ${JAILNAME}_$usr $usr
+$usr ALL=(root) NOPASSWD: $(which docker-cmd) ${JAILNAME}_$usr $usr *
 EOF
-usermod -s $(which docker-jailsh) $user
+usermod -s $(which docker-jailsh) $usr
 
 exit 0
