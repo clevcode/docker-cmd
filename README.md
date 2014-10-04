@@ -77,6 +77,10 @@ If you want to disable the jail and restore the default login shell for "luser",
 ```
 sudo docker-rmjail luser
 ```
+To enter the jail for a user as root, to make further customizations, run:
+```
+sudo docker-cmd jail_luser
+```
 The first time you create a jail, it will create a new base image. This will
 take some time. The next time you create a jail for a user, this image will
 be reused. If you want to remove a jail base image, in order to create a new
