@@ -28,6 +28,7 @@ int clone_namespace(pid_t pid, int nstype)
     char *type = NULL;
     char fname[32];
     int fd;
+    int n;
 
     switch (nstype) {
         case CLONE_NEWIPC:  type = "ipc";  break;
@@ -43,7 +44,11 @@ int clone_namespace(pid_t pid, int nstype)
         return -1;
     }
 
-    snprintf(fname, sizeof(fname), "/proc/%u/ns/%s", pid, type);
+    n = snprintf(fname, sizeof(fname), "/proc/%u/ns/%s", pid, type);
+    if (n < 0 || n >= sizeof(fname)) {
+        fprintf(stderr, "clone_namespace: snprintf() failed\n");
+        return -1;
+    }
 
     if ((fd = open(fname, O_RDONLY)) == -1) {
         fprintf(stderr, "clone_namespace(%d, %s): open: %s\n", pid, type, strerror(errno));

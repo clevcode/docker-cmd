@@ -17,6 +17,7 @@ int set_reasonably_secure_env(const char *username)
 {
     static char home_buf[PATH_MAX+6], term_buf[64], path_buf[128], *term_str;
     struct passwd *pw;
+    int n;
 
     errno = 0;
     if ((pw = getpwnam(username)) == NULL) {
@@ -32,12 +33,21 @@ int set_reasonably_secure_env(const char *username)
         _exit(1); /* rather not give the calling function a chance to mess this up */
     }
 
-    snprintf(home_buf, sizeof(home_buf), "HOME=%s", pw->pw_dir);
+    n = snprintf(home_buf, sizeof(home_buf), "HOME=%s", pw->pw_dir);
+    if (n < 0 || n >= sizeof(home_buf)) {
+        fprintf(stderr, "set_reasonably_secure_env: snprintf() failed\n");
+        _exit(1); /* rather not give the calling function a chance to mess this up */
+    }
 
     if (pw->pw_uid == 0)
-        snprintf(path_buf, sizeof(path_buf), "PATH=/bin:/usr/bin:/sbin:/usr/sbin");
+        n = snprintf(path_buf, sizeof(path_buf), "PATH=/bin:/usr/bin:/sbin:/usr/sbin");
     else
-        snprintf(path_buf, sizeof(path_buf), "PATH=/bin:/usr/bin");
+        n = snprintf(path_buf, sizeof(path_buf), "PATH=/bin:/usr/bin");
+
+    if (n < 0 || n >= sizeof(path_buf)) {
+        fprintf(stderr, "set_reasonably_secure_env: snprintf() failed\n");
+        _exit(1); /* rather not give the calling function a chance to mess this up */
+    }
 
     if ((term_str = getenv("TERM")) == NULL)
         term_str = "xterm";
@@ -49,15 +59,20 @@ int set_reasonably_secure_env(const char *username)
 
     snprintf(term_buf, sizeof(term_buf), "TERM=%s", term_str);
 
+    if (n < 0 || n >= sizeof(term_buf)) {
+        fprintf(stderr, "set_reasonably_secure_env: snprintf() failed\n");
+        _exit(1); /* rather not give the calling function a chance to mess this up */
+    }
+
     putenv(home_buf);
     putenv(path_buf);
     putenv(term_buf);
 
     /*
      * Might want to add a few more whitelisted environment variables,
-     * such as LANG / LC_CTYPE etc. But I'd rather be safe than sorry,
-     * so until configuration options / configuration files have been
-     * added to specify this, we keep it strict.
+     * such as LANG / LC_*. But I'd rather be safe than sorry, so until
+     * configuration options / configuration files have been added to
+     * specify this, we keep it strict.
      */
 
     return 0;
@@ -74,7 +89,10 @@ int close_files()
     }
 
     for (fd = 3; fd < rlim.rlim_cur; fd++)
-        close(fd);
+        if (close(fd) == -1 && errno != EBADF) {
+		perror("close_files: close");
+		_exit(1); /* rather not give the calling function a chance to mess this up */
+	}
 
     return 0;
 }
