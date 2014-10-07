@@ -12,13 +12,12 @@
 
 void on_sigchld(int sig)
 {
-    for (;;) {
-        if (waitpid(-1, 0, WNOHANG) == -1) {
-            if (errno != ECHILD)
-                perror("waitpid");
-            break;
-        }
-    }
+    int rc;
+
+    do {
+        if ((rc = waitpid(-1, 0, WNOHANG)) == -1 && errno != ECHILD)
+            perror("waitpid");
+    } while (rc > 0);
 }
 
 int main(void)
